@@ -64,3 +64,67 @@ async def test_real_postgres_and_pgvector():
             raise
     finally:
         await engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_postgres_users_table_schema():
+    """Verify users table existence, columns, and indexes in live PostgreSQL."""
+    engine = create_async_engine(settings.DATABASE_URL, echo=False)
+
+    try:
+        async with engine.connect() as conn:
+            # 1. Verify table columns and nullability
+            col_res = await conn.execute(
+                text(
+                    "SELECT column_name, data_type, is_nullable "
+                    "FROM information_schema.columns "
+                    "WHERE table_name = 'users' "
+                    "ORDER BY ordinal_position;"
+                )
+            )
+            columns = {row[0]: {"type": row[1], "nullable": row[2]} for row in col_res.fetchall()}
+            assert "id" in columns
+            assert "email" in columns
+            assert "hashed_password" in columns
+            assert "role" in columns
+            assert "tenant_id" in columns
+            assert "is_active" in columns
+            assert "created_at" in columns
+
+            assert columns["id"]["type"] == "uuid"
+            assert columns["id"]["nullable"] == "NO"
+            assert columns["email"]["nullable"] == "NO"
+            assert columns["hashed_password"]["nullable"] == "NO"
+            assert columns["role"]["nullable"] == "NO"
+            assert columns["tenant_id"]["nullable"] == "NO"
+            assert columns["is_active"]["nullable"] == "NO"
+
+            # 2. Verify indexes on users table
+            idx_res = await conn.execute(
+                text(
+                    "SELECT indexname, indexdef "
+                    "FROM pg_indexes "
+                    "WHERE tablename = 'users';"
+                )
+            )
+            indexes = {row[0]: row[1] for row in idx_res.fetchall()}
+
+            # Unique index on email
+            assert "ix_users_email" in indexes
+            assert "UNIQUE INDEX" in indexes["ix_users_email"]
+
+            # Index on tenant_id
+            assert "ix_users_tenant_id" in indexes
+
+            # Composite index on tenant_id and role
+            assert "ix_users_tenant_role" in indexes
+            assert "tenant_id" in indexes["ix_users_tenant_role"] and "role" in indexes["ix_users_tenant_role"]
+
+    except (OSError, ConnectionRefusedError, Exception) as exc:
+        err_msg = str(exc).lower()
+        if any(keyword in err_msg for keyword in ["connect", "refused", "timeout", "target machine actively refused"]):
+            pytest.skip(f"PostgreSQL service not accessible at {settings.DATABASE_URL}: {exc}")
+        else:
+            raise
+    finally:
+        await engine.dispose()
