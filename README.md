@@ -25,20 +25,40 @@ Copy the example environment configuration:
 cp .env.example .env
 ```
 
-### 2. Running Database with Docker Compose
+### 2. Virtual Environment Setup
+
+Create and activate a project-local virtual environment:
+
+**Windows (PowerShell):**
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
+
+**Windows (Command Prompt):**
+```cmd
+python -m venv .venv
+.\.venv\Scripts\activate.bat
+```
+
+**Linux / macOS:**
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+Install pinned backend dependencies into the virtual environment:
+
+```bash
+pip install -r backend/requirements.txt
+```
+
+### 3. Running Database with Docker Compose
 
 Start the PostgreSQL service with `pgvector`:
 
 ```bash
 docker compose up -d db
-```
-
-### 3. Running Backend Locally
-
-Install backend dependencies:
-
-```bash
-pip install -r backend/requirements.txt
 ```
 
 Run database migrations:
