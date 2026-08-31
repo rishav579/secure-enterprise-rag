@@ -6,6 +6,7 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.app.config import get_settings
 from backend.app.core.security import TokenExpiredError, TokenInvalidError, decode_access_token
 from backend.app.database import get_db
 from backend.app.models.user import User, UserRole

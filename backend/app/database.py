@@ -22,6 +22,8 @@ def create_engine_for_url(url: str, echo: bool = False) -> AsyncEngine:
     if "sqlite" not in url:
         kwargs["pool_size"] = settings.DB_POOL_SIZE
         kwargs["max_overflow"] = settings.DB_MAX_OVERFLOW
+        kwargs["pool_pre_ping"] = True
+        kwargs["pool_recycle"] = 1800
 
     return create_async_engine(url, **kwargs)
 
