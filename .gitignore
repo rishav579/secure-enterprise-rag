@@ -40,11 +40,13 @@ venv.bak/
 *.pem
 *.key
 
-# Database
+# Database & Application Storage
 *.sqlite
 *.sqlite3
 *.db
 pgdata/
+.local/
+storage/
 
 # Node / Frontend
 node_modules/
