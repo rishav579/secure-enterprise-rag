@@ -6,6 +6,9 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
 
+import os
+os.environ["APP_ENV"] = "testing"
+
 from backend.app.api.deps import get_db
 from backend.app.config import Settings, get_settings
 from backend.app.database import Base

@@ -39,7 +39,7 @@ def test_grounding_explicit_refusal_phrase():
     assert res.is_refusal is True
 
 
-def test_grounding_fully_grounded():
+def test_grounding_PROVENANCE_VERIFIED():
     item = _make_item("[DOC-1]")
     res = evaluate_grounding_deterministically(
         answer="MFA is mandatory for employees [DOC-1].",
@@ -47,7 +47,7 @@ def test_grounding_fully_grounded():
         fabricated_citation_ids=[],
         context_chunks_count=2,
     )
-    assert res.status == GroundingStatus.FULLY_GROUNDED
+    assert res.status == GroundingStatus.PROVENANCE_VERIFIED
     assert res.is_refusal is False
 
 

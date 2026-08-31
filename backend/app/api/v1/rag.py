@@ -1,7 +1,7 @@
 import logging
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.api.deps import (
@@ -11,6 +11,7 @@ from backend.app.api.deps import (
     get_llm_service,
 )
 from backend.app.api.v1.retrieval import get_reranker
+from backend.app.core.rate_limit import limiter
 from backend.app.config import get_settings
 from backend.app.models.user import User
 from backend.app.schemas.rag import (
@@ -50,7 +51,9 @@ def get_rag_pipeline(
     response_model=RAGQueryResponse,
     summary="Execute grounded retrieval-augmented generation with verified citations",
 )
+@limiter.limit("20/minute")
 async def rag_query(
+    request: Request,
     body: RAGQueryRequest,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),

@@ -14,6 +14,7 @@ Query normalization:
 """
 
 import time
+import asyncio
 import unicodedata
 import uuid
 from dataclasses import dataclass
@@ -186,9 +187,12 @@ class RetrievalPipeline:
         fused = fuse_rrf(lex_results, vec_results, k=self._reranker_cap)
         rrf_ms = (time.perf_counter() - t_rrf_start) * 1000
 
-        # 6. Rerank
+        # 6. Rerank (Offloaded to a thread to prevent event loop blocking)
         t_rr_start = time.perf_counter()
-        reranked = self._reranker.rerank(normalized, fused, top_k=top_k)
+        if self._reranker:
+            reranked = await asyncio.to_thread(self._reranker.rerank, normalized, fused, top_k)
+        else:
+            reranked = fused[:top_k]
         rr_ms = (time.perf_counter() - t_rr_start) * 1000
         was_reranked = any(c.reranker_score is not None for c in reranked)
 

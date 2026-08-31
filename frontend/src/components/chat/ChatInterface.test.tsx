@@ -53,7 +53,7 @@ describe('ChatInterface Component', () => {
           snippet: 'Enterprise MFA is strictly mandatory.',
         },
       ],
-      grounding_status: 'FULLY_GROUNDED',
+      grounding_status: 'PROVENANCE_VERIFIED',
       is_refusal: false,
       diagnostics: null,
     };

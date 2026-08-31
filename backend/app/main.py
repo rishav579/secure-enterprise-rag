@@ -14,6 +14,9 @@ from backend.app.api.v1.documents import router as documents_router
 from backend.app.api.v1.rag import router as rag_router
 from backend.app.api.v1.retrieval import router as retrieval_router
 from backend.app.config import Settings, get_settings
+from backend.app.core.rate_limit import limiter
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +40,12 @@ def create_app() -> FastAPI:
         redoc_url="/redoc" if initial_settings.APP_ENV != "production" else None,
         lifespan=lifespan,
     )
+
+    application.state.limiter = limiter
+    application.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+    if get_settings().APP_ENV == "testing":
+        limiter.enabled = False
 
     # CORS Middleware
     application.add_middleware(

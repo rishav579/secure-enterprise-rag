@@ -20,6 +20,7 @@ def escape_document_content(text: str) -> str:
     # Neutralize any attempts to close or manipulate the untrusted_documents quarantine blocks
     sanitized = re.sub(r"</?untrusted_documents>", "[untrusted_documents_escaped]", text, flags=re.IGNORECASE)
     sanitized = re.sub(r"</?document(\s*[^>]*)?>", "[document_tag_escaped]", sanitized, flags=re.IGNORECASE)
+    sanitized = re.sub(r"</?user_query>", "[user_query_escaped]", sanitized, flags=re.IGNORECASE)
     return sanitized
 
 

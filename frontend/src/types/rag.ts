@@ -10,7 +10,7 @@ export interface CitationItem {
 }
 
 export type GroundingStatus =
-  | 'FULLY_GROUNDED'
+  | 'PROVENANCE_VERIFIED'
   | 'PARTIALLY_GROUNDED'
   | 'REFUSAL'
   | 'UNSUPPORTED_OR_FABRICATED';

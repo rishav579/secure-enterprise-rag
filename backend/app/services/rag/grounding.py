@@ -8,7 +8,7 @@ from backend.app.services.retrieval.pipeline import RetrievalResult
 
 
 class GroundingStatus(str, Enum):
-    FULLY_GROUNDED = "FULLY_GROUNDED"
+    PROVENANCE_VERIFIED = "PROVENANCE_VERIFIED"
     PARTIALLY_GROUNDED = "PARTIALLY_GROUNDED"
     REFUSAL = "REFUSAL"
     UNSUPPORTED_OR_FABRICATED = "UNSUPPORTED_OR_FABRICATED"
@@ -88,7 +88,7 @@ def evaluate_grounding_deterministically(
         )
 
     return GroundingEvaluation(
-        status=GroundingStatus.FULLY_GROUNDED,
+        status=GroundingStatus.PROVENANCE_VERIFIED,
         is_refusal=False,
-        explanation=f"All {len(valid_citations)} citations map directly to verified chunks in the authorized context.",
+        explanation=f"All {len(valid_citations)} citations map directly to verified chunks in the authorized context (note: semantic entailment not verified).",
     )

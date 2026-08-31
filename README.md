@@ -90,10 +90,20 @@ All measurements below were empirically gathered by executing the benchmark test
 
 ---
 
-## Security Regression Suite
+## Security Guarantees & Known Limitations (Forensic Audit Remediation)
 
-The platform includes a consolidated adversarial security test suite (`backend/tests/security/test_security_regressions.py`) verifying 12 security invariants:
+The application has been hardened following an independent forensic audit:
+- **Authentication**: Constant-time comparison for unknown users mitigates email enumeration timing oracles.
+- **Rate Limiting**: `slowapi` enforces basic endpoint protections (`5/min` auth, `10/min` upload). **Limitation**: Currently uses in-memory tracking (suitable for single-instance). Multi-instance deployments require Redis.
+- **Nginx Uploads**: Proxy limits synchronized with backend 10MB limits via `client_max_body_size 10M;`.
+- **Query Prompt Boundaries**: User queries are explicitly wrapped in `<user_query>` and escaped to mitigate basic injection.
+- **Grounding Validation**: The term `FULLY_GROUNDED` has been accurately renamed to `PROVENANCE_VERIFIED`. **Limitation**: This confirms citation provenance (that `[DOC-N]` maps to a retrieved chunk), but does NOT perform an NLI semantic entailment check.
+- **Docker Startup**: Fixed race condition where Alembic didn't migrate fresh databases before FastAPI startup.
 
+### Additional Security Measures:
+- **Tenant Isolation**: SQL-level Row-Level Security (RLS) equivalents via mandatory `tenant_id` WHERE clauses.
+- **Strict Parsing**: PDFs are defensively parsed to prevent billion-laughs, deeply nested payloads, or executable extraction.
+- **Secure File Storage**: Uploaded files use UUIDv4 identifiers preventing path traversal and metadata leakage.
 1. **Cross-Tenant Document Access**: Confirmed Tenant B cannot retrieve, search, or cite Tenant A data.
 2. **IDOR / Direct UUID Probing**: GET requests against foreign document UUIDs return `404 Not Found` (anti-enumeration).
 3. **Immediate Permission Revocation**: Revoking document read access renders the document immediately invisible (404) to that user.

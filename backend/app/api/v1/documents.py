@@ -1,7 +1,7 @@
 import logging
 import uuid
 from typing import List, Optional
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status, Request
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,6 +12,7 @@ from backend.app.api.deps import (
     get_storage_service,
 )
 from backend.app.core.authorization import DocumentAccessPolicy
+from backend.app.core.rate_limit import limiter
 from backend.app.models.document import Document, DocumentChunk
 from backend.app.models.permission import DocumentPermission
 from backend.app.models.user import User, UserRole
@@ -57,7 +58,9 @@ async def _async_upload_file_chunks(file: UploadFile, chunk_size: int = 65536):
     response_model=DocumentUploadResponse,
     status_code=status.HTTP_201_CREATED,
 )
+@limiter.limit("10/minute")
 async def upload_document(
+    request: Request,
     file: UploadFile = File(...),
     min_role: UserRole = Form(UserRole.EMPLOYEE),
     current_user: User = Depends(get_current_user),

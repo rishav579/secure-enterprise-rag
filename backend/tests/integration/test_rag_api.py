@@ -216,7 +216,7 @@ async def test_rag_query_grounded_answer_and_citations(rag_client):
         assert r.status_code == 200
         body = r.json()
         assert body["is_refusal"] is False
-        assert body["grounding_status"] == GroundingStatus.FULLY_GROUNDED.value
+        assert body["grounding_status"] == GroundingStatus.PROVENANCE_VERIFIED.value
         assert len(body["citations"]) == 1
 
         citation = body["citations"][0]
