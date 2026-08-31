@@ -8,6 +8,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.api.deps import get_db
+from backend.app.api.v1.auth import router as auth_router
 from backend.app.config import Settings, get_settings
 
 logger = logging.getLogger(__name__)
@@ -41,6 +42,9 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Mount API routers
+    application.include_router(auth_router, prefix="/api/v1")
 
     @application.get("/", tags=["Root"])
     async def root(settings: Settings = Depends(get_settings)):
