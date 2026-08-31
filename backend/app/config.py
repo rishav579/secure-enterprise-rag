@@ -28,6 +28,15 @@ class Settings(BaseSettings):
     EMBEDDING_DIMENSIONS: int = 768
     EMBEDDING_BATCH_SIZE: int = 32
 
+    # LLM Generation (Phase 4)
+    LLM_MODEL: str = "gemini-3.7-flash"
+    LLM_MAX_OUTPUT_TOKENS: int = 1024
+    LLM_THINKING_BUDGET: int = 0
+    RAG_MAX_CONTEXT_CHUNKS: int = 5
+    RAG_MAX_CONTEXT_CHARS: int = 16000
+    COST_PER_MILLION_INPUT_TOKENS: float = 0.10   # Gemini 3.7 Flash: $0.10 / 1M input tokens
+    COST_PER_MILLION_OUTPUT_TOKENS: float = 0.40  # Gemini 3.7 Flash: $0.40 / 1M output tokens
+
     # Ingestion & Storage Limits
     MAX_UPLOAD_SIZE_BYTES: int = 10 * 1024 * 1024  # 10 MB
     MAX_PDF_PAGES: int = 100

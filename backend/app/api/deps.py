@@ -125,6 +125,18 @@ def get_embedding_service():
     return MockEmbeddingService(dimension=settings.EMBEDDING_DIMENSIONS)
 
 
+def get_llm_service():
+    from backend.app.services.llm import GeminiLLMService, MockLLMService
+    settings = get_settings()
+    if settings.GEMINI_API_KEY:
+        return GeminiLLMService(
+            api_key=settings.GEMINI_API_KEY.get_secret_value(),
+            model_name=settings.LLM_MODEL,
+            thinking_budget=settings.LLM_THINKING_BUDGET,
+        )
+    return MockLLMService(model_name=settings.LLM_MODEL)
+
+
 __all__ = [
     "get_db",
     "oauth2_scheme",
@@ -134,5 +146,6 @@ __all__ = [
     "verify_tenant_access",
     "get_storage_service",
     "get_embedding_service",
+    "get_llm_service",
 ]
 
