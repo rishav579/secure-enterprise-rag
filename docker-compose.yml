@@ -29,7 +29,7 @@ services:
       SECRET_KEY: ${SECRET_KEY:-replace-with-a-secure-random-secret-key-in-production}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
-      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-text-embedding-004}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-gemini-embedding-2}
       CORS_ORIGINS: http://localhost,http://localhost:80,http://localhost:5173
     ports:
       - "8000:8000"
