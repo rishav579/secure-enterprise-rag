@@ -161,6 +161,9 @@ async def upload_document(
         embeddings = await embedding_service.embed_texts(chunk_texts)
 
         # E. Short DB Transaction 2: Bulk insert chunks & finalize document
+        from sqlalchemy import func as sqlfunc
+        is_postgresql = db.get_bind().dialect.name == "postgresql"
+
         for i, chunk_data in enumerate(chunks):
             chunk_rec = DocumentChunk(
                 document_id=doc_id,
@@ -168,6 +171,8 @@ async def upload_document(
                 chunk_index=chunk_data.chunk_index,
                 content=chunk_data.content,
                 embedding=embeddings[i],
+                # Populate content_tsv for PostgreSQL lexical (FTS) retrieval
+                content_tsv=sqlfunc.to_tsvector("english", chunk_data.content) if is_postgresql else None,
                 chunk_metadata={
                     "page_number": chunk_data.page_number,
                     "char_start": chunk_data.char_start,
