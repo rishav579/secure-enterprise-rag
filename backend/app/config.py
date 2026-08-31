@@ -22,6 +22,17 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
+    # Embeddings & GenAI
+    GEMINI_API_KEY: Union[SecretStr, None] = None
+    EMBEDDING_MODEL: str = "gemini-embedding-2"
+    EMBEDDING_DIMENSIONS: int = 768
+    EMBEDDING_BATCH_SIZE: int = 32
+
+    # Ingestion & Storage Limits
+    MAX_UPLOAD_SIZE_BYTES: int = 10 * 1024 * 1024  # 10 MB
+    MAX_PDF_PAGES: int = 100
+    STORAGE_LOCAL_DIR: str = ".local/storage"
+
     # CORS
     CORS_ORIGINS: Union[str, List[str]] = ["http://localhost:5173", "http://127.0.0.1:5173"]
 

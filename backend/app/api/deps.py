@@ -106,6 +106,25 @@ def verify_tenant_access(current_user: User, target_tenant_id: str) -> None:
     check_tenant(current_user, target_tenant_id)
 
 
+def get_storage_service():
+    from backend.app.services.storage import LocalStorageService
+    settings = get_settings()
+    return LocalStorageService(base_dir=settings.STORAGE_LOCAL_DIR)
+
+
+def get_embedding_service():
+    from backend.app.services.embedding import GeminiEmbeddingService, MockEmbeddingService
+    settings = get_settings()
+    if settings.GEMINI_API_KEY:
+        return GeminiEmbeddingService(
+            api_key=settings.GEMINI_API_KEY.get_secret_value(),
+            model_name=settings.EMBEDDING_MODEL,
+            dimension=settings.EMBEDDING_DIMENSIONS,
+            batch_size=settings.EMBEDDING_BATCH_SIZE,
+        )
+    return MockEmbeddingService(dimension=settings.EMBEDDING_DIMENSIONS)
+
+
 __all__ = [
     "get_db",
     "oauth2_scheme",
@@ -113,4 +132,7 @@ __all__ = [
     "require_role",
     "require_admin",
     "verify_tenant_access",
+    "get_storage_service",
+    "get_embedding_service",
 ]
+

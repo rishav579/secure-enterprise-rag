@@ -1,5 +1,5 @@
 import uuid
-from typing import Optional, Set
+from typing import Any, Optional, Set, Union
 
 from sqlalchemy import and_, or_, select
 from sqlalchemy.sql.elements import BinaryExpression
@@ -97,7 +97,7 @@ class DocumentAccessPolicy:
     def can_access_document(
         user: User,
         document: Document,
-        granted_doc_ids: Optional[Set[uuid.UUID]] = None,
+        granted_doc_ids: Optional[Union[Set[uuid.UUID], bool]] = None,
     ) -> bool:
         """Evaluate single-document access rights in Python.
         
@@ -114,6 +114,9 @@ class DocumentAccessPolicy:
 
         if document.min_role == UserRole.EMPLOYEE:
             return True
+
+        if isinstance(granted_doc_ids, bool):
+            return granted_doc_ids
 
         if granted_doc_ids and document.id in granted_doc_ids:
             return True
@@ -132,11 +135,12 @@ class DocumentAccessPolicy:
         return user.role == UserRole.ADMIN or document.owner_id == user.id
 
     @staticmethod
-    def validate_chunk_tenant_invariant(document: Document, chunk_tenant_id: str) -> None:
+    def validate_chunk_tenant_invariant(document: Document, chunk_tenant_id: Union[str, Any]) -> None:
         """Enforce that a chunk's denormalized tenant_id strictly matches the parent document's tenant_id."""
-        if chunk_tenant_id != document.tenant_id:
+        actual_tenant = chunk_tenant_id.tenant_id if hasattr(chunk_tenant_id, "tenant_id") else chunk_tenant_id
+        if actual_tenant != document.tenant_id:
             raise ValueError(
-                f"Tenant invariant violation: chunk tenant '{chunk_tenant_id}' "
+                f"Tenant invariant violation: chunk tenant '{actual_tenant}' "
                 f"does not match parent document tenant '{document.tenant_id}'"
             )
 
@@ -144,12 +148,13 @@ class DocumentAccessPolicy:
     def validate_permission_tenant_invariant(
         document: Document,
         granted_user: User,
-        permission_tenant_id: str,
+        permission_tenant_id: Union[str, Any],
     ) -> None:
         """Enforce that a permission grant matches both the document's tenant and the granted user's tenant."""
-        if permission_tenant_id != document.tenant_id:
+        actual_tenant = permission_tenant_id.tenant_id if hasattr(permission_tenant_id, "tenant_id") else permission_tenant_id
+        if actual_tenant != document.tenant_id:
             raise ValueError(
-                f"Tenant invariant violation: permission tenant '{permission_tenant_id}' "
+                f"Tenant invariant violation: permission tenant '{actual_tenant}' "
                 f"does not match document tenant '{document.tenant_id}'"
             )
         if granted_user.tenant_id != document.tenant_id:
