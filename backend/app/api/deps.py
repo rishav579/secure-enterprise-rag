@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.core.security import TokenExpiredError, TokenInvalidError, decode_access_token
 from backend.app.database import get_db
-from backend.app.models.user import User
+from backend.app.models.user import User, UserRole
 
 # OAuth2 scheme with auto_error=False to allow explicit custom error responses and headers
 oauth2_scheme = OAuth2PasswordBearer(
@@ -78,4 +78,39 @@ async def get_current_user(
     return user
 
 
-__all__ = ["get_db", "oauth2_scheme", "get_current_user"]
+def require_role(*roles: UserRole):
+    """FastAPI dependency factory enforcing that the authenticated user possesses one of the required roles.
+    
+    Raises HTTP 403 Forbidden if user privileges are insufficient.
+    """
+    allowed_roles = set(roles)
+
+    async def _role_dependency(current_user: User = Depends(get_current_user)) -> User:
+        from backend.app.core.permissions import check_role
+        check_role(current_user, allowed_roles)
+        return current_user
+
+    return _role_dependency
+
+
+# Convenience dependency requiring administrator privileges
+require_admin = require_role(UserRole.ADMIN)
+
+
+def verify_tenant_access(current_user: User, target_tenant_id: str) -> None:
+    """Verify that the target tenant scope matches the authenticated user's authoritative tenant_id.
+    
+    Raises HTTP 403 Forbidden on tenant mismatch.
+    """
+    from backend.app.core.permissions import check_tenant
+    check_tenant(current_user, target_tenant_id)
+
+
+__all__ = [
+    "get_db",
+    "oauth2_scheme",
+    "get_current_user",
+    "require_role",
+    "require_admin",
+    "verify_tenant_access",
+]
