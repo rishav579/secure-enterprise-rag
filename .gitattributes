@@ -1,0 +1,4 @@
+# Ensure shell scripts always retain Unix LF line endings
+*.sh text eol=lf
+entrypoint.sh text eol=lf
+Dockerfile text eol=lf
