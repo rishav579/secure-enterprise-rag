@@ -51,6 +51,15 @@ jobs:
           path: ./
           extra_args: --debug --only-verified
 
+      - name: Run Alembic Database Migrations
+        env:
+          DATABASE_URL: postgresql+asyncpg://rag_admin:ci_test_password@localhost:5432/rag_enterprise_db
+          SECRET_KEY: ci_secret_key_for_testing_purposes_only_32bytes_minimum
+          APP_ENV: testing
+          DEBUG: "False"
+        run: |
+          alembic -c backend/alembic.ini upgrade head
+
       - name: Run Pytest Regression Suite
         env:
           DATABASE_URL: postgresql+asyncpg://rag_admin:ci_test_password@localhost:5432/rag_enterprise_db
