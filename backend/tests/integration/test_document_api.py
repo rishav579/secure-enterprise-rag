@@ -250,6 +250,119 @@ async def test_upload_corrupt_pdf_cleaned_up(client_and_users):
 
 
 @pytest.mark.asyncio
+async def test_failed_document_retry_succeeds_and_replaces_failed_record(client_and_users, test_db_session: AsyncSession):
+    """Verify that a failed document row does NOT block re-uploading the same file with 409, and succeeds."""
+    ac, tokens, users, storage, mock_embedding = client_and_users
+    headers = {"Authorization": f"Bearer {tokens['alpha_emp1']}"}
+
+    pdf_bytes = create_minimal_text_pdf(["Content that previously failed due to transient error."])
+
+    # 1. Simulate a previous failed ingestion row for this exact PDF content
+    import hashlib
+    file_hash = hashlib.sha256(pdf_bytes).hexdigest()
+    failed_doc_id = uuid.uuid4()
+    failed_path = storage.get_safe_path("tenant_alpha", failed_doc_id)
+    # Create orphan file to test cleanup
+    Path(failed_path).parent.mkdir(parents=True, exist_ok=True)
+    with open(failed_path, "wb") as f:
+        f.write(b"dummy failed content")
+
+    failed_doc = Document(
+        id=failed_doc_id,
+        tenant_id="tenant_alpha",
+        owner_id=users["alpha_emp1"].id,
+        filename="retry_doc.pdf",
+        file_path=failed_path,
+        file_hash=file_hash,
+        file_size_bytes=len(pdf_bytes),
+        status="failed",
+        error_message="Ingestion failed: TransientNetworkError",
+    )
+    test_db_session.add(failed_doc)
+    await test_db_session.commit()
+
+    # Verify old file exists before retry
+    assert Path(failed_path).exists()
+
+    # 2. Retry upload of the same file content
+    files = {"file": ("retry_doc.pdf", io.BytesIO(pdf_bytes), "application/pdf")}
+    r_retry = await ac.post("/api/v1/documents/upload", files=files, headers=headers)
+
+    # Must NOT return 409; must succeed with 201 Created
+    assert r_retry.status_code == 201
+    new_doc_id = uuid.UUID(r_retry.json()["id"])
+    assert new_doc_id != failed_doc_id
+    assert r_retry.json()["status"] == "completed"
+
+    # Verify old failed DB row was cleaned up and new completed row exists
+    old_row = await test_db_session.get(Document, failed_doc_id)
+    assert old_row is None
+    new_row = await test_db_session.get(Document, new_doc_id)
+    assert new_row is not None
+    assert new_row.status == "completed"
+
+    # Verify old orphaned file was safely removed
+    assert not Path(failed_path).exists()
+
+
+@pytest.mark.asyncio
+async def test_processing_document_blocks_duplicate_retry_with_409(client_and_users, test_db_session: AsyncSession):
+    """Verify that a document currently in 'processing' status DOES return 409 to prevent concurrent duplicate ingestion."""
+    ac, tokens, users, storage, mock_embedding = client_and_users
+    headers = {"Authorization": f"Bearer {tokens['alpha_emp1']}"}
+
+    pdf_bytes = create_minimal_text_pdf(["Content currently being processed."])
+    import hashlib
+    file_hash = hashlib.sha256(pdf_bytes).hexdigest()
+    proc_doc_id = uuid.uuid4()
+
+    proc_doc = Document(
+        id=proc_doc_id,
+        tenant_id="tenant_alpha",
+        owner_id=users["alpha_emp1"].id,
+        filename="processing_doc.pdf",
+        file_path=storage.get_safe_path("tenant_alpha", proc_doc_id),
+        file_hash=file_hash,
+        file_size_bytes=len(pdf_bytes),
+        status="processing",
+    )
+    test_db_session.add(proc_doc)
+    await test_db_session.commit()
+
+    # Upload same file content while previous is processing
+    files = {"file": ("processing_doc.pdf", io.BytesIO(pdf_bytes), "application/pdf")}
+    r = await ac.post("/api/v1/documents/upload", files=files, headers=headers)
+
+    assert r.status_code == 409
+    assert "already exists in this tenant" in r.json()["detail"]["message"]
+    assert r.json()["detail"]["existing_document_id"] == str(proc_doc_id)
+
+
+@pytest.mark.asyncio
+async def test_no_orphan_file_remains_after_failed_upload(client_and_users, test_db_session: AsyncSession):
+    """Verify that when an upload fails, no orphaned storage file remains on disk."""
+    ac, tokens, users, storage, mock_embedding = client_and_users
+    headers = {"Authorization": f"Bearer {tokens['alpha_emp1']}"}
+
+    # Corrupt PDF that will fail during SafePDFParser.parse_file()
+    corrupt_bytes = b"%PDF-1.7\nCorrupted binary payload without valid PDF objects"
+    files = {"file": ("fail_clean.pdf", io.BytesIO(corrupt_bytes), "application/pdf")}
+
+    r = await ac.post("/api/v1/documents/upload", files=files, headers=headers)
+    assert r.status_code == 400
+
+    # Get the created failed document row
+    failed_doc = (await test_db_session.execute(
+        select(Document).where(Document.filename == "fail_clean.pdf")
+    )).scalar_one_or_none()
+    assert failed_doc is not None
+    assert failed_doc.status == "failed"
+
+    # Verify no orphan file exists at failed_doc.file_path
+    assert not Path(failed_doc.file_path).exists()
+
+
+@pytest.mark.asyncio
 async def test_document_list_and_get_access_control(client_and_users):
     ac, tokens, users, storage, mock_embedding = client_and_users
 

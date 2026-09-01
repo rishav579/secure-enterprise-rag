@@ -70,28 +70,45 @@ export async function apiClient<T>(
   }
 
   if (!response.ok) {
-    let errorMessage = 'An unexpected error occurred.';
+    let errorMessage = '';
     if (typeof data === 'object' && data !== null) {
       if (typeof data.detail === 'string') {
         errorMessage = data.detail;
+      } else if (typeof data.detail === 'object' && data.detail !== null) {
+        if (typeof data.detail.message === 'string') {
+          errorMessage = data.detail.message;
+        } else {
+          errorMessage = JSON.stringify(data.detail);
+        }
       } else if (Array.isArray(data.detail)) {
         // Pydantic validation errors
         errorMessage = data.detail.map((err: any) => err.msg || JSON.stringify(err)).join(', ');
+      } else if (typeof data.message === 'string') {
+        errorMessage = data.message;
+      }
+    } else if (typeof data === 'string' && data.trim()) {
+      errorMessage = data;
+    }
+
+    // Normalized fallback status messages if no specific error was extracted
+    if (!errorMessage) {
+      if (response.status === 401) {
+        errorMessage = 'Invalid or expired session. Please log in again.';
+      } else if (response.status === 403) {
+        errorMessage = 'You do not have permission to access this resource.';
+      } else if (response.status === 404) {
+        errorMessage = 'The requested resource was not found.';
+      } else if (response.status === 409) {
+        errorMessage = 'A conflict occurred with an existing resource.';
+      } else if (response.status === 502 || response.status === 504) {
+        errorMessage = 'Upstream service is temporarily unavailable.';
+      } else {
+        errorMessage = 'An unexpected error occurred.';
       }
     }
 
-    // Normalized status messages
     if (response.status === 401) {
       setAuthToken(null);
-      errorMessage = errorMessage || 'Invalid or expired session. Please log in again.';
-    } else if (response.status === 403) {
-      errorMessage = errorMessage || 'You do not have permission to access this resource.';
-    } else if (response.status === 404) {
-      errorMessage = errorMessage || 'The requested resource was not found.';
-    } else if (response.status === 409) {
-      errorMessage = errorMessage || 'A conflict occurred with an existing resource.';
-    } else if (response.status === 502 || response.status === 504) {
-      errorMessage = errorMessage || 'Upstream service is temporarily unavailable.';
     }
 
     throw new APIError(response.status, errorMessage, data);

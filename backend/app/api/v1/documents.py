@@ -105,22 +105,30 @@ async def upload_document(
         )
 
     # 3. Deduplication check within tenant
-    dup_query = select(Document.id).where(
+    dup_query = select(Document).where(
         Document.tenant_id == tenant_id,
         Document.file_hash == file_hash,
     )
     dup_result = await db.execute(dup_query)
-    existing_id = dup_result.scalar_one_or_none()
+    existing_doc = dup_result.scalar_one_or_none()
 
-    if existing_id:
-        await storage.delete_file(file_path)
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail={
-                "message": "A document with identical content already exists in this tenant.",
-                "existing_document_id": str(existing_id),
-            },
-        )
+    if existing_doc:
+        if existing_doc.status != "failed":
+            # Active document (completed or processing) blocks duplicate upload
+            await storage.delete_file(file_path)
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail={
+                    "message": "A document with identical content already exists in this tenant.",
+                    "existing_document_id": str(existing_doc.id),
+                },
+            )
+        else:
+            # Previous attempt failed: clean up any orphaned file and remove failed DB row to allow clean retry
+            if existing_doc.file_path and existing_doc.file_path != file_path:
+                await storage.delete_file(existing_doc.file_path)
+            await db.delete(existing_doc)
+            await db.flush()
 
     # 4. Short DB Transaction 1: Create Document row in 'processing' state
     doc = Document(
