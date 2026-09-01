@@ -42,6 +42,11 @@ def hash_password(password: str) -> str:
     return hashed.decode("utf-8")
 
 
+# Dynamically generated at import to prevent hardcoding credential-like bcrypt hash literals in source code
+# while ensuring timing-oracle mitigations perform identical bcrypt work for unknown users.
+DUMMY_PASSWORD_HASH: str = hash_password("anti_timing_oracle_dummy_hash_token")
+
+
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a plaintext password against a bcrypt hash in constant time.
     

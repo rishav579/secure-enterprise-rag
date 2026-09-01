@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.api.deps import get_current_user, get_db
-from backend.app.core.security import create_access_token, hash_password, verify_password
+from backend.app.core.security import DUMMY_PASSWORD_HASH, create_access_token, hash_password, verify_password
 from backend.app.core.rate_limit import limiter
 from backend.app.models.user import User, UserRole
 from backend.app.schemas.auth import TokenResponse, UserLoginRequest, UserRegisterRequest, UserResponse
@@ -88,10 +88,8 @@ async def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # Valid bcrypt hash for constant-time comparison when user is not found
-    _DUMMY_HASH = "$2b$12$e8pS4.e2hG3uA7rL9wE5zeO5Z9h7e3k5r6k7e8k9r0k1r2k3r4k5e"
-    
-    target_hash = user.hashed_password if user else _DUMMY_HASH
+    # Perform constant-time comparison when user is not found to prevent timing oracles
+    target_hash = user.hashed_password if user else DUMMY_PASSWORD_HASH
     valid_pw = verify_password(body.password, target_hash)
     
     if user is None or not valid_pw or not user.is_active:
