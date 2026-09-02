@@ -52,11 +52,15 @@ class GeminiEmbeddingService:
 
         for attempt in range(1, self.max_retries + 1):
             try:
-                # Synchronous client call executed in thread pool to preserve async loop
+                # Wrap each text in a Content object so the SDK returns one embedding per input text
+                contents = [
+                    types.Content(parts=[types.Part.from_text(text=t)])
+                    for t in texts_batch
+                ]
                 response = await asyncio.to_thread(
                     self._client.models.embed_content,
                     model=self.model_name,
-                    contents=texts_batch,
+                    contents=contents,
                     config=types.EmbedContentConfig(
                         output_dimensionality=self._dimension,
                     ),
