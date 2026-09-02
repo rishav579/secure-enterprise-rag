@@ -45,6 +45,19 @@ class Settings(BaseSettings):
     # CORS
     CORS_ORIGINS: Union[str, List[str]] = ["http://localhost:5173", "http://127.0.0.1:5173"]
 
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def normalize_database_url(cls, value: str) -> str:
+        if isinstance(value, str):
+            cleaned = value.strip()
+            # Normalize legacy/cloud postgresql schemas (e.g. Render, Heroku) to asyncpg driver
+            if cleaned.startswith("postgres://"):
+                return "postgresql+asyncpg://" + cleaned[len("postgres://"):]
+            elif cleaned.startswith("postgresql://"):
+                return "postgresql+asyncpg://" + cleaned[len("postgresql://"):]
+            return cleaned
+        return value
+
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
     def parse_cors_origins(cls, value: Union[str, List[str]]) -> List[str]:
