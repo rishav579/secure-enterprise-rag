@@ -4,6 +4,7 @@ import os
 import sys
 
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.core.security import hash_password
 from backend.app.database import AsyncSessionLocal
