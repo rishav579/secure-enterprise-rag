@@ -69,3 +69,12 @@ async def test_bootstrap_admin_promote_existing_employee(test_db_session: AsyncS
     assert user.role == UserRole.ADMIN
     assert verify_password(new_password, user.hashed_password) is True
 
+
+def test_entrypoint_bootstrap_condition():
+    """Verify that entrypoint.sh contains the ADMIN_BOOTSTRAP_ENABLED check."""
+    import pathlib
+    entrypoint_path = pathlib.Path(__file__).parents[2] / "scripts" / "entrypoint.sh"
+    assert entrypoint_path.exists()
+    content = entrypoint_path.read_text(encoding="utf-8")
+    assert 'if [ "${ADMIN_BOOTSTRAP_ENABLED}" = "true" ]; then' in content
+    assert "python -m backend.scripts.bootstrap_admin" in content

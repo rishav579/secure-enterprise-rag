@@ -210,7 +210,23 @@ npm run dev
 ```
 Frontend dev server will run on `http://localhost:5173`.
 
+### 5. Production Admin Bootstrap (Render Free Deployment)
+
+On Render Free instances (where SSH Shell access is unavailable), execute the one-time admin creation or promotion flow automatically during container startup:
+
+1. **Set Environment Variables in Render Dashboard (Backend Service)**:
+   * `ADMIN_BOOTSTRAP_ENABLED` = `true`
+   * `ADMIN_EMAIL` = `admin@yourcompany.com`
+   * `ADMIN_PASSWORD` = `<YOUR_SECURE_ADMIN_PASSWORD>`
+   * *(Optional)* `ADMIN_TENANT_ID` = `default` (defaults to `"default"`)
+2. **Trigger Deployment**:
+   * Save environment settings or trigger a Manual Deploy.
+   * Container startup (`entrypoint.sh`) will run Alembic migrations, detect `ADMIN_BOOTSTRAP_ENABLED=true`, execute `python -m backend.scripts.bootstrap_admin`, and safely create/promote the admin user in PostgreSQL before launching Uvicorn.
+3. **Post-Deployment Security Cleanup**:
+   * Once deployment completes and login is verified, set `ADMIN_BOOTSTRAP_ENABLED=false` (or remove `ADMIN_PASSWORD`) in your Render Environment settings to prevent unnecessary execution on subsequent deploys.
+
 ---
+
 
 ## Test Suites & CI/CD
 
