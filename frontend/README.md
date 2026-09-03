@@ -1,32 +1,17 @@
-# React + TypeScript + Vite
+# Secure Enterprise RAG — Frontend SPA
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Production Single-Page Application (SPA) for **Secure Enterprise RAG**, constructed using React 19, TypeScript, Vite, and Tailwind CSS.
 
-Currently, two official plugins are available:
+## Key Capabilities & Components
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Authentication**: JWT session management with tab-scoped fallback storage (`AuthContext`).
+- **Document Management**: Role-aware document listing, streaming PDF upload modal, and document deletion.
+- **Permission Management**: Intra-tenant explicit permission grant/revoke modal (`PermissionManagerModal`) for sharing restricted documents with specific users.
+- **Grounded Chat & Citations**: Interactive RAG query drawer with server-mapped citation details (`[DOC-N]`) and real-time execution diagnostics (`DiagnosticsPanel`).
 
-## React Compiler
+## Operational Scripts
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
-```
-
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+* `npm run dev`: Launch Vite local development server on `http://localhost:5173` (proxies `/api` requests to backend).
+* `npm run test`: Execute Vitest component & API client unit test suite.
+* `npm run build`: Typecheck with `tsc` and assemble production bundle in `dist/`.
+* `npm run preview`: Serve production bundle locally for previewing.

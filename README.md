@@ -232,7 +232,7 @@ On Render Free instances (where SSH Shell access is unavailable), execute the on
 
 ### Backend Tests
 ```bash
-# Full regression suite (162+ tests)
+# Full regression suite (204+ tests: 190 backend + 14 frontend)
 python -m pytest backend/tests/ -v
 
 # Consolidated security regression suite (12 tests)
