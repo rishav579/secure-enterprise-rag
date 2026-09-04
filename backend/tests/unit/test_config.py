@@ -65,3 +65,26 @@ def test_create_engine_for_url_normalizes_legacy_schemes():
     assert engine.url.drivername == "postgresql+asyncpg"
     assert "user" == engine.url.username
     assert "dbname" == engine.url.database
+
+
+def test_production_rejects_default_secret_key():
+    """Verify Settings raises ValueError in production when default SECRET_KEY is used."""
+    import pytest
+    from pydantic import ValidationError
+    with pytest.raises(ValidationError, match="Default SECRET_KEY is forbidden in production"):
+        Settings(APP_ENV="production")
+
+
+def test_production_rejects_short_secret_key():
+    """Verify Settings raises ValueError in production when SECRET_KEY is under 32 chars."""
+    import pytest
+    from pydantic import ValidationError
+    with pytest.raises(ValidationError, match="must be at least 32 characters long"):
+        Settings(APP_ENV="production", SECRET_KEY="short-secret-key-less-32-char")
+
+
+def test_production_accepts_valid_secret_key():
+    """Verify Settings accepts valid 32+ char non-default SECRET_KEY in production."""
+    valid_secret = "a_very_secure_and_long_production_secret_key_32bytes"
+    settings = Settings(APP_ENV="production", SECRET_KEY=valid_secret)
+    assert settings.SECRET_KEY.get_secret_value() == valid_secret

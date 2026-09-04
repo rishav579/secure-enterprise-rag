@@ -43,7 +43,7 @@ jobs:
           pip install pip-audit
 
       - name: Run pip-audit for Vulnerabilities
-        run: pip-audit -r backend/requirements.txt || echo "Vulnerabilities found but not failing build to prevent CI flakes"
+        run: pip-audit -r backend/requirements.txt
 
       - name: Secret Scanning (TruffleHog)
         uses: trufflesecurity/trufflehog@main
@@ -110,7 +110,7 @@ jobs:
         run: npm ci
 
       - name: Run npm audit
-        run: npm audit --audit-level=high || echo "npm audit failed but not failing CI"
+        run: npm audit --audit-level=high
 
       - name: Run Frontend Tests (Vitest)
         run: npm run test
