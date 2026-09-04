@@ -86,6 +86,12 @@ async def rag_query(
             db=db,
             top_k=body.top_k,
         )
+    except ValueError as exc:
+        logger.info("rag.query invalid query request_id=%s error=%s", request_id, str(exc))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
     except LLMTimeoutError as exc:
         logger.error("rag.query timeout request_id=%s", request_id)
         raise HTTPException(

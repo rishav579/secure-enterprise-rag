@@ -41,7 +41,7 @@ PostgreSQL 16 (Full-Text)    pgvector (Cosine Similarity)
 | **Local Reranking** | Benchmarked | FlashRank (`ms-marco-MiniLM-L-12-v2`) cross-encoder local reranker with input candidate bounds. |
 | **Generation Defenses**| Verified | Native system instructions, `<untrusted_documents>` XML delimiters with sanitization, zero external tool capabilities. |
 | **Citation Integrity** | Verified | Server-owned `DOC-N` identity resolution; fabricated IDs (`[DOC-99]`) pruned deterministically before response delivery. |
-| **Grounding Check** | Verified | Deterministic post-generation grounding validator categorizing responses (`FULLY_GROUNDED`, `REFUSAL`, etc.). |
+| **Grounding Check** | Verified | Deterministic post-generation grounding validator categorizing responses (`PROVENANCE_VERIFIED`, `REFUSAL`, etc.). Verifies citation provenance (mapping `[DOC-N]` to retrieved chunks); semantic/NLI entailment is not evaluated. |
 | **Frontend UI** | Verified | React 19 + TypeScript + Vite + Tailwind CSS dashboard with privacy-preserving metadata, citations drawer, and diagnostics panel. |
 
 ---

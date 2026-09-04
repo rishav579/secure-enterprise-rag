@@ -45,6 +45,24 @@ class Settings(BaseSettings):
     # CORS
     CORS_ORIGINS: Union[str, List[str]] = ["http://localhost:5173", "http://127.0.0.1:5173"]
 
+    @field_validator("SECRET_KEY", mode="after")
+    @classmethod
+    def validate_production_secret_key(cls, value: SecretStr, info) -> SecretStr:
+        app_env = info.data.get("APP_ENV", "development")
+        if app_env == "production":
+            raw_secret = value.get_secret_value()
+            default_secret = "replace-with-a-secure-random-secret-key-in-production"
+            if raw_secret == default_secret:
+                raise ValueError(
+                    "Default SECRET_KEY is forbidden in production environment. "
+                    "Set a secure random SECRET_KEY in your environment variables."
+                )
+            if len(raw_secret) < 32:
+                raise ValueError(
+                    "Production SECRET_KEY must be at least 32 characters long."
+                )
+        return value
+
     @field_validator("DATABASE_URL", mode="before")
     @classmethod
     def normalize_database_url(cls, value: str) -> str:
