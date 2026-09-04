@@ -71,8 +71,9 @@ def test_production_rejects_default_secret_key():
     """Verify Settings raises ValueError in production when default SECRET_KEY is used."""
     import pytest
     from pydantic import ValidationError
+    default_secret = "replace-with-a-secure-random-secret-key-in-production"
     with pytest.raises(ValidationError, match="Default SECRET_KEY is forbidden in production"):
-        Settings(APP_ENV="production")
+        Settings(APP_ENV="production", SECRET_KEY=default_secret)
 
 
 def test_production_rejects_short_secret_key():
