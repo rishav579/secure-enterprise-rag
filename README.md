@@ -1,4 +1,4 @@
-# Secure Enterprise RAG Assistant
+# Secure Enterprise RAG Assistant | https://secure-enterprise-rag-frontend.onrender.com
 
 A zero-trust Retrieval-Augmented Generation (RAG) platform with strict multi-tenant isolation, database-level Role-Based Access Control (RBAC), hybrid lexical and vector retrieval, local cross-encoder reranking, defense-in-depth prompt injection protections, and reproducible evaluation benchmarks.
 
